@@ -6,8 +6,7 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-
-<AnchorPane id="AnchorPane" prefHeight="400.0" prefWidth="600.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/8" fx:controller="com.evgeniy_mh.paddingoracleserver.FXMLController">
+<AnchorPane id="AnchorPane" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.evgeniy_mh.paddingoracleserver.FXMLController">
    <children>
       <VBox prefHeight="200.0" prefWidth="100.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
          <children>
@@ -15,14 +14,8 @@
                <children>
                   <VBox prefHeight="200.0" HBox.hgrow="ALWAYS">
                      <children>
-                        <Label text="Атакующий" />
-                        <TextArea editable="false" prefHeight="200.0" prefWidth="200.0" />
-                     </children>
-                  </VBox>
-                  <VBox prefHeight="200.0" HBox.hgrow="ALWAYS">
-                     <children>
                         <Label text="Сервер" />
-                        <TextArea editable="false" prefHeight="200.0" prefWidth="200.0" />
+                        <TextArea fx:id="ServerOutputTextArea" editable="false" prefHeight="200.0" prefWidth="200.0" />
                      </children>
                   </VBox>
                </children>
