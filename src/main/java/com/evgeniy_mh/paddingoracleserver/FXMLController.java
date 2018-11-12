@@ -31,7 +31,7 @@ public class FXMLController {
             alert.showAndWait();
         });
 
-        SocketProcessor processor = new SocketProcessor(messageQueue);
+        ServerSocketProcessor processor = new ServerSocketProcessor(messageQueue);
         Thread server = new Thread(processor);
         server.setDaemon(true);
         server.start();
