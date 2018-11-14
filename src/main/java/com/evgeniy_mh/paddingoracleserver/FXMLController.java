@@ -38,7 +38,6 @@ public class FXMLController {
 
         final LongProperty lastUpdate = new SimpleLongProperty();
         final long minUpdateInterval = 0;
-
         AnimationTimer timer = new AnimationTimer() {
             @Override
             public void handle(long now) {

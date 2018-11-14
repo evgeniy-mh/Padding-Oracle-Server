@@ -8,6 +8,8 @@ package com.evgeniy_mh.paddingoracleserver;
 import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -15,6 +17,7 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.URISyntaxException;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.logging.Level;
@@ -28,6 +31,7 @@ import javafx.scene.control.TextArea;
 public class ServerSocketProcessor implements Runnable {
 
     private final BlockingQueue<String> messageQueue;
+    File tempSavedFile;
 
     ServerSocketProcessor(BlockingQueue<String> messageQueue) {
         this.messageQueue = messageQueue;
@@ -51,36 +55,47 @@ public class ServerSocketProcessor implements Runnable {
     }
 
     private void initServer() throws IOException {
-        ServerSocket servers = new ServerSocket(55555);
-        putMessage("Waiting for a client...");
-        Socket fromclient = servers.accept();
-        putMessage("Client connected");
+        while (true) {
+            ServerSocket servers = new ServerSocket(55555);
+            putMessage("Waiting for a client...");
+            Socket fromclient = servers.accept();
+            putMessage("Client connected");
 
-        /*BufferedReader in = new BufferedReader(new InputStreamReader(fromclient.getInputStream()));
-        PrintWriter out = new PrintWriter(fromclient.getOutputStream(), true);
+            InputStream sin = fromclient.getInputStream();
+            OutputStream sout = fromclient.getOutputStream();
 
-        String input, output;
+            DataInputStream in = new DataInputStream(sin);
+            DataOutputStream out = new DataOutputStream(sout);
 
-        putMessage("Wait for messages");
-        while ((input = in.readLine()) != null) {
-            //out.println("S ::: " + input);
-            putMessage(input);
-        }*/
-        InputStream sin = fromclient.getInputStream();
-        OutputStream sout = fromclient.getOutputStream();
+            String line = in.readUTF();
 
-        DataInputStream in = new DataInputStream(sin);
-        DataOutputStream out = new DataOutputStream(sout);
+            if (line.equals("new file")) {
+                long fileSize = in.readLong();
+                putMessage("New file from client, size: " + fileSize);
 
-        String line = null;
-        while ((line = in.readUTF()) != null) {
-            putMessage(line);
+                //File pathnameParentDir = new File(MainApp.class.getProtectionDomain().getCodeSource().getLocation().getPath()).getParentFile();
+                //tempSavedFile = new File(pathnameParentDir, "tempSavedFile");
+                tempSavedFile = new File("/home/evgeniy/Files/Downloads/temp");
+
+                tempSavedFile.createNewFile();
+                FileOutputStream fis = new FileOutputStream(tempSavedFile);
+
+                int t;
+                while ((t = sin.read()) != -1) {
+                    fis.write(t);
+                }
+                fis.close();
+                putMessage("Saved new file from client");
+
+            }
+
+            out.close();
+            in.close();
+            sout.close();
+            sin.close();
+            fromclient.close();
+            servers.close();
         }
-
-        out.close();
-        in.close();
-        fromclient.close();
-        servers.close();
     }
 
 }
