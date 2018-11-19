@@ -1,5 +1,7 @@
 package com.evgeniy_mh.paddingoracleserver;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import javafx.animation.AnimationTimer;
@@ -44,7 +46,7 @@ public class FXMLController {
                 if (now - lastUpdate.get() > minUpdateInterval) {
                     final String message = messageQueue.poll();
                     if (message != null) {
-                        ServerOutputTextArea.appendText(message+"\n");
+                        ServerOutputTextArea.appendText(message + "\n");
                     }
                     lastUpdate.set(now);
                 }
@@ -53,4 +55,12 @@ public class FXMLController {
         timer.start();
     }
 
+    public static void showExceptionToUser(Throwable e, String message) {
+        Alert errorAlert = new Alert(Alert.AlertType.ERROR);
+        errorAlert.setTitle("Exception!");
+        StringWriter sw = new StringWriter();
+        e.printStackTrace(new PrintWriter(sw));
+        errorAlert.setContentText(message + "\n" + sw.toString());
+        errorAlert.showAndWait();
+    }
 }
