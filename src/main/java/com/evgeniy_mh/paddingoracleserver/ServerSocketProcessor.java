@@ -5,30 +5,27 @@
  */
 package com.evgeniy_mh.paddingoracleserver;
 
-import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.URISyntaxException;
-import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javafx.scene.control.TextArea;
 
 /**
  *
  * @author evgeniy
  */
 public class ServerSocketProcessor implements Runnable {
+
+    private final int PADDING_OK_RESPONSE = 200;
+    private final int PADDING_ERROR_RESPONSE = 500;
 
     private final BlockingQueue<String> messageQueue;
     File tempSavedFile;
@@ -56,9 +53,9 @@ public class ServerSocketProcessor implements Runnable {
 
     private void initServer() throws IOException {
         while (true) {
-            ServerSocket servers = new ServerSocket(55555);
+            ServerSocket server = new ServerSocket(55555);
             putMessage("Waiting for a client...");
-            Socket fromclient = servers.accept();
+            Socket fromclient = server.accept();
             putMessage("Client connected");
 
             InputStream sin = fromclient.getInputStream();
@@ -78,15 +75,23 @@ public class ServerSocketProcessor implements Runnable {
                 tempSavedFile = new File("/home/evgeniy/Files/Downloads/temp");
 
                 tempSavedFile.createNewFile();
-                FileOutputStream fis = new FileOutputStream(tempSavedFile);
+                FileOutputStream fos = new FileOutputStream(tempSavedFile);
 
                 int t;
-                while ((t = sin.read()) != -1) {
-                    fis.write(t);
-                }
-                fis.close();
+                for(int i=0;i<fileSize;i++){
+                    t = sin.read();
+                    fos.write(t);
+                }                
+                fos.close();
                 putMessage("Saved new file from client");
 
+                if (checkPadding(tempSavedFile)) {
+                    out.writeInt(PADDING_OK_RESPONSE);
+                    putMessage("Padding ok");
+                } else {
+                    out.writeInt(PADDING_ERROR_RESPONSE);
+                    putMessage("Padding error");
+                }
             }
 
             out.close();
@@ -94,8 +99,13 @@ public class ServerSocketProcessor implements Runnable {
             sout.close();
             sin.close();
             fromclient.close();
-            servers.close();
+            server.close();
         }
+    }
+
+    private boolean checkPadding(File file) {
+
+        return true;
     }
 
 }
