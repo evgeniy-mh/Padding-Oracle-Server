@@ -1,5 +1,6 @@
 package com.evgeniy_mh.paddingoracleserver;
 
+import com.evgeniy_mh.paddingoracleserver.AESEngine.AES_CBCDencryptor;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
@@ -10,19 +11,27 @@ import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.FutureTask;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javafx.concurrent.Task;
+import javafx.scene.control.ProgressIndicator;
 
 public class ServerSocketProcessor implements Runnable {
 
     private final int PADDING_OK_RESPONSE = 200;
     private final int PADDING_ERROR_RESPONSE = 500;
 
-    private final BlockingQueue<String> messageQueue;
-    File tempSavedFile;
+    private final BlockingQueue<String> mMessageQueue;
+    private final ProgressIndicator mProgressIndicator;
 
-    ServerSocketProcessor(BlockingQueue<String> messageQueue) {
-        this.messageQueue = messageQueue;
+    private File tempSavedFile;
+
+    ServerSocketProcessor(BlockingQueue<String> messageQueue, ProgressIndicator progressIndicator) {
+        mMessageQueue = messageQueue;
+        mProgressIndicator = progressIndicator;
     }
 
     @Override
@@ -36,7 +45,7 @@ public class ServerSocketProcessor implements Runnable {
 
     private void putMessage(String message) {
         try {
-            messageQueue.put(message);
+            mMessageQueue.put(message);
         } catch (InterruptedException ex) {
             Logger.getLogger(ServerSocketProcessor.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -69,10 +78,10 @@ public class ServerSocketProcessor implements Runnable {
                 FileOutputStream fos = new FileOutputStream(tempSavedFile);
 
                 int t;
-                for(int i=0;i<fileSize;i++){
+                for (int i = 0; i < fileSize; i++) {
                     t = sin.read();
                     fos.write(t);
-                }                
+                }
                 fos.close();
                 putMessage("Saved new file from client");
 
@@ -95,8 +104,24 @@ public class ServerSocketProcessor implements Runnable {
     }
 
     private boolean checkPadding(File file) {
+        //File pathnameParentDir = new File(MainApp.class.getProtectionDomain().getCodeSource().getLocation().getPath()).getParentFile();
+        //tempSavedFile = new File(pathnameParentDir, "tempDecryptedFile");
 
-        return true;
+        File tempDecryptedFile = new File("/home/evgeniy/Files/Downloads/temp_dec");
+        byte[] key = {5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5};
+        Callable c = new AES_CBCDencryptor(file, tempDecryptedFile, key, mProgressIndicator);
+        FutureTask<Boolean> ftask = new FutureTask<>(c);
+        Thread thread = new Thread(ftask);
+        thread.start();
+
+        boolean isPaddingCorrect = false;
+        try {
+            isPaddingCorrect = ftask.get();
+        } catch (InterruptedException | ExecutionException ex) {
+            Logger.getLogger(ServerSocketProcessor.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+        return isPaddingCorrect;
     }
 
 }

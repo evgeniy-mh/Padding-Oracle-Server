@@ -10,6 +10,7 @@ import javafx.beans.property.SimpleLongProperty;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.ProgressBar;
 import javafx.scene.control.TextArea;
 
 public class FXMLController {
@@ -21,6 +22,8 @@ public class FXMLController {
     Button testButton;
     @FXML
     TextArea ServerOutputTextArea;
+    @FXML
+    ProgressBar progressBar;
 
     public void setMainApp(MainApp mainApp) {
         this.mainApp = mainApp;
@@ -33,7 +36,7 @@ public class FXMLController {
             alert.showAndWait();
         });
 
-        ServerSocketProcessor processor = new ServerSocketProcessor(messageQueue);
+        ServerSocketProcessor processor = new ServerSocketProcessor(messageQueue, progressBar);
         Thread server = new Thread(processor);
         server.setDaemon(true);
         server.start();
