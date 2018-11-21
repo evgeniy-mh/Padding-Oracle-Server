@@ -6,6 +6,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.concurrent.Callable;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javafx.scene.control.ProgressIndicator;
 
 public class AES_CBCDencryptor implements Callable<Boolean> {
@@ -150,13 +152,15 @@ public class AES_CBCDencryptor implements Callable<Boolean> {
                     //проверка дополнения
                     byte paddingCount = c[AES.BLOCK_SIZE - 1];
 
-                    if (c[AES.BLOCK_SIZE - 1] > 0 && c[AES.BLOCK_SIZE - 1] <= 16) {
+                    if (paddingCount > 0 && paddingCount <= 16) {
                         for (byte p = paddingCount; p > 0; p--) {
                             if (c[p] != paddingCount) {
                                 error = true;
                                 break;
                             }
                         }
+                    }else{
+                        error = true;
                     }
                     if (!error) {
                         nToDeleteBytes = c[AES.BLOCK_SIZE - 1];
@@ -169,9 +173,10 @@ public class AES_CBCDencryptor implements Callable<Boolean> {
             OUTraf.close();
             INraf.close();
         } catch (IOException e) {
+            Logger.getLogger(AES_CBCDencryptor.class.getName()).log(Level.SEVERE, null, e);
             CommonUtils.reportExceptionToMainThread(e, "Exception in decrypt thread!");
         }
         progressIndicator.setProgress(0.0);
-        return error;
+        return !error;
     }
 }

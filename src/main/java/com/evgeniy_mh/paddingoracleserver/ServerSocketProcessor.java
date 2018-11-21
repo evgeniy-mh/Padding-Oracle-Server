@@ -21,6 +21,7 @@ import javafx.scene.control.ProgressIndicator;
 
 public class ServerSocketProcessor implements Runnable {
 
+    private final int SERVER_PORT = 55555;
     private final int PADDING_OK_RESPONSE = 200;
     private final int PADDING_ERROR_RESPONSE = 500;
 
@@ -52,75 +53,78 @@ public class ServerSocketProcessor implements Runnable {
     }
 
     private void initServer() throws IOException {
-        while (true) {
-            ServerSocket server = new ServerSocket(55555);
-            putMessage("Waiting for a client...");
-            Socket fromclient = server.accept();
-            putMessage("Client connected");
+        try (ServerSocket server = new ServerSocket(SERVER_PORT)) {
+            while (true) {
+                putMessage("Waiting for a client...");
+                Socket fromclient = server.accept();
+                putMessage("Client connected");
 
-            InputStream sin = fromclient.getInputStream();
-            OutputStream sout = fromclient.getOutputStream();
+                InputStream sin = fromclient.getInputStream();
+                OutputStream sout = fromclient.getOutputStream();
 
-            DataInputStream in = new DataInputStream(sin);
-            DataOutputStream out = new DataOutputStream(sout);
+                DataInputStream in = new DataInputStream(sin);
+                DataOutputStream out = new DataOutputStream(sout);
 
-            String line = in.readUTF();
+                String line = in.readUTF();
 
-            if (line.equals("new file")) {
-                long fileSize = in.readLong();
-                putMessage("New file from client, size: " + fileSize);
+                if (line.equals("new file")) {
+                    long fileSize = in.readLong();
+                    putMessage("New file from client, size: " + fileSize);
 
-                //File pathnameParentDir = new File(MainApp.class.getProtectionDomain().getCodeSource().getLocation().getPath()).getParentFile();
-                //tempSavedFile = new File(pathnameParentDir, "tempSavedFile");
-                tempSavedFile = new File("/home/evgeniy/Files/Downloads/temp");
+                    //File pathnameParentDir = new File(MainApp.class.getProtectionDomain().getCodeSource().getLocation().getPath()).getParentFile();
+                    //tempSavedFile = new File(pathnameParentDir, "tempSavedFile");
+                    tempSavedFile = new File("/home/evgeniy/Files/Downloads/temp");
 
-                tempSavedFile.createNewFile();
-                FileOutputStream fos = new FileOutputStream(tempSavedFile);
+                    tempSavedFile.createNewFile();
+                    try (FileOutputStream fos = new FileOutputStream(tempSavedFile)) {
+                        int t;
+                        for (int i = 0; i < fileSize; i++) {
+                            t = sin.read();
+                            fos.write(t);
+                        }
+                    }
+                    putMessage("Saved new file from client");
 
-                int t;
-                for (int i = 0; i < fileSize; i++) {
-                    t = sin.read();
-                    fos.write(t);
-                }
-                fos.close();
-                putMessage("Saved new file from client");
-
-                if (checkPadding(tempSavedFile)) {
-                    out.writeInt(PADDING_OK_RESPONSE);
-                    putMessage("Padding ok");
-                } else {
-                    out.writeInt(PADDING_ERROR_RESPONSE);
-                    putMessage("Padding error");
+                    if (checkPadding(tempSavedFile)) {
+                        out.writeInt(PADDING_OK_RESPONSE);
+                        putMessage("Padding ok");
+                    } else {
+                        out.writeInt(PADDING_ERROR_RESPONSE);
+                        putMessage("Padding error");
+                    }
+                    out.flush();
+                    tempSavedFile.delete();
+                    out.close();
+                    in.close();
+                    sout.close();
+                    sin.close();
+                    fromclient.close();
                 }
             }
-
-            out.close();
-            in.close();
-            sout.close();
-            sin.close();
-            fromclient.close();
-            server.close();
+        } catch (IOException ex) {
+            Logger.getLogger(ServerSocketProcessor.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
     private boolean checkPadding(File file) {
         //File pathnameParentDir = new File(MainApp.class.getProtectionDomain().getCodeSource().getLocation().getPath()).getParentFile();
         //tempSavedFile = new File(pathnameParentDir, "tempDecryptedFile");
-
         File tempDecryptedFile = new File("/home/evgeniy/Files/Downloads/temp_dec");
         byte[] key = {5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5};
         Callable c = new AES_CBCDencryptor(file, tempDecryptedFile, key, mProgressIndicator);
         FutureTask<Boolean> ftask = new FutureTask<>(c);
         Thread thread = new Thread(ftask);
         thread.start();
+        ftask.run();
 
         boolean isPaddingCorrect = false;
         try {
             isPaddingCorrect = ftask.get();
+
         } catch (InterruptedException | ExecutionException ex) {
             Logger.getLogger(ServerSocketProcessor.class.getName()).log(Level.SEVERE, null, ex);
         }
-
+        tempDecryptedFile.delete();
         return isPaddingCorrect;
     }
 
