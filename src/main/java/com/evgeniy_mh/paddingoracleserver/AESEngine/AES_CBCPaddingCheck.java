@@ -11,7 +11,7 @@ public class AES_CBCPaddingCheck implements Callable<Boolean> {
     private final byte[] in;
     private final byte[] key;
 
-    AES_CBCPaddingCheck(byte[] in, byte[] key, ProgressIndicator progressIndicator) {
+    public AES_CBCPaddingCheck(byte[] in, byte[] key, ProgressIndicator progressIndicator) {
         mAES = new AES();
         this.progressIndicator = progressIndicator;
         this.in = in;
