@@ -1,6 +1,6 @@
 package com.evgeniy_mh.paddingoracleserver;
 
-import com.evgeniy_mh.paddingoracleserver.AESEngine.AES_CBCFilePaddingCheck;
+import com.evgeniy_mh.paddingoracleserver.AESEngine.AES_CBCPaddingCheckAndDecrypt;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
