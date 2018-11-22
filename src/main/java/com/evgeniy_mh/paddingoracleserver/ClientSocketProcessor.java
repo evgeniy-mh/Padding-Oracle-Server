@@ -1,6 +1,6 @@
 package com.evgeniy_mh.paddingoracleserver;
 
-import com.evgeniy_mh.paddingoracleserver.AESEngine.AES_CBCDencryptor;
+import com.evgeniy_mh.paddingoracleserver.AESEngine.AES_CBCFilePaddingCheck;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
@@ -56,20 +56,24 @@ public class ClientSocketProcessor implements Runnable {
                 long fileSize = in.readLong();
                 putMessage("New file from client, size: " + fileSize);
 
-                //File pathnameParentDir = new File(MainApp.class.getProtectionDomain().getCodeSource().getLocation().getPath()).getParentFile();
-                //tempSavedFile = new File(pathnameParentDir, "tempSavedFile");
-                //tempSavedFile = new File("/home/evgeniy/Files/Downloads/temp");
-                //tempSavedFile.createNewFile();
-                tempSavedFile = File.createTempFile("tempSaved", null, new File("/home/evgeniy/Files/Downloads/"));
+                if (fileSize > 50000) {
+                    //File pathnameParentDir = new File(MainApp.class.getProtectionDomain().getCodeSource().getLocation().getPath()).getParentFile();
+                    //tempSavedFile = new File(pathnameParentDir, "tempSavedFile");
+                    //tempSavedFile = new File("/home/evgeniy/Files/Downloads/temp");
+                    //tempSavedFile.createNewFile();
+                    tempSavedFile = File.createTempFile("tempSaved", null, new File("/home/evgeniy/Files/Downloads/"));
 
-                try (FileOutputStream fos = new FileOutputStream(tempSavedFile)) {
-                    int t;
-                    for (int i = 0; i < fileSize; i++) {
-                        t = sin.read();
-                        fos.write(t);
+                    try (FileOutputStream fos = new FileOutputStream(tempSavedFile)) {
+                        int t;
+                        for (int i = 0; i < fileSize; i++) {
+                            t = sin.read();
+                            fos.write(t);
+                        }
                     }
+                    putMessage("Saved new file from client");
+                }else{
+                    
                 }
-                putMessage("Saved new file from client");
 
                 if (checkPadding(tempSavedFile)) {
                     out.writeInt(PADDING_OK_RESPONSE);
@@ -95,10 +99,10 @@ public class ClientSocketProcessor implements Runnable {
         //File pathnameParentDir = new File(MainApp.class.getProtectionDomain().getCodeSource().getLocation().getPath()).getParentFile();
         //tempSavedFile = new File(pathnameParentDir, "tempDecryptedFile");
         //File tempDecryptedFile = new File("/home/evgeniy/Files/Downloads/temp_dec");
-        File tempDecryptedFile = File.createTempFile("tempDecSaved", null, new File("/home/evgeniy/Files/Downloads/"));
+        /*File tempDecryptedFile = File.createTempFile("tempDecSaved", null, new File("/home/evgeniy/Files/Downloads/"));
         byte[] key = {5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5};
 
-        Callable c = new AES_CBCDencryptor(file, tempDecryptedFile, key, mProgressIndicator);
+        Callable c = new AES_CBCFilePaddingCheck(file, tempDecryptedFile, key, mProgressIndicator);
         FutureTask<Boolean> ftask = new FutureTask<>(c);
         Thread thread = new Thread(ftask);
         thread.start();
@@ -111,7 +115,8 @@ public class ClientSocketProcessor implements Runnable {
             Logger.getLogger(ServerSocketProcessor.class.getName()).log(Level.SEVERE, null, ex);
         }
         tempDecryptedFile.delete();
-        return isPaddingCorrect;
+        return isPaddingCorrect;*/
+        return false;
     }
 
 }

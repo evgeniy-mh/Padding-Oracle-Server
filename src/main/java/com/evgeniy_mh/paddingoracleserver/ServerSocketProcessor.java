@@ -40,7 +40,6 @@ public class ServerSocketProcessor implements Runnable {
     private void initServer() throws IOException {
         try (ServerSocket server = new ServerSocket(SERVER_PORT)) {
             while (true) {
-                putMessage("Waiting for a client...");
                 Socket fromclient = server.accept();
                 putMessage("Client connected");                                
                 
