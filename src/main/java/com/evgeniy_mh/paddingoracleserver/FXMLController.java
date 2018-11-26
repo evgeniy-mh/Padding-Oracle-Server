@@ -2,8 +2,11 @@ package com.evgeniy_mh.paddingoracleserver;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javafx.animation.AnimationTimer;
 import javafx.beans.property.LongProperty;
 import javafx.beans.property.SimpleLongProperty;
@@ -12,34 +15,59 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.TextArea;
+import javafx.scene.control.TextField;
 
 public class FXMLController {
 
     private MainApp mainApp;
+    private ServerSocketProcessor processor = null;
     final BlockingQueue<String> messageQueue = new ArrayBlockingQueue<>(1);
 
     @FXML
-    Button testButton;
+    Button startServerButton;
+    @FXML
+    Button stopServerButton;
     @FXML
     TextArea ServerOutputTextArea;
     @FXML
     ProgressBar progressBar;
+    @FXML
+    TextField secretKeyTextField;
 
     public void setMainApp(MainApp mainApp) {
         this.mainApp = mainApp;
     }
 
     public void initialize() {
-        testButton.setOnAction(event -> {
-            Alert alert = new Alert(Alert.AlertType.INFORMATION);
-            alert.setTitle("Test");
-            alert.showAndWait();
+        stopServerButton.setDisable(true);
+
+        startServerButton.setOnAction(event -> {
+            byte[] key = getSecretKey();
+            if (key == null) {
+                Alert alert = new Alert(Alert.AlertType.WARNING);
+                alert.setTitle("Ошибка ключа шифрования AES");
+                alert.setHeaderText("Вы не ввели ключ или ввели ключ длина которого больше 128 бит.");
+                alert.showAndWait();
+            } else {
+                processor = new ServerSocketProcessor(messageQueue, progressBar, key);
+                Thread server = new Thread(processor);
+                server.setDaemon(true);
+                server.start();
+                putMessage("Сервер запущен с ключом " + secretKeyTextField.getText());
+                stopServerButton.setDisable(false);
+                startServerButton.setDisable(true);
+            }
         });
 
-        ServerSocketProcessor processor = new ServerSocketProcessor(messageQueue, progressBar);
-        Thread server = new Thread(processor);
-        server.setDaemon(true);
-        server.start();
+        stopServerButton.setOnAction(event -> {
+            if (processor != null && processor.isRunning()) {
+                processor.stop();
+                putMessage("Сервер остановлен");
+                startServerButton.setDisable(false);
+                stopServerButton.setDisable(true);
+            }
+
+        });
 
         final LongProperty lastUpdate = new SimpleLongProperty();
         final long minUpdateInterval = 0;
@@ -56,6 +84,23 @@ public class FXMLController {
             }
         };
         timer.start();
+    }
+
+    private byte[] getSecretKey() {
+        byte[] key = secretKeyTextField.getText().getBytes(StandardCharsets.UTF_8);
+        if (key.length == 0 || key.length > 128) {
+            return null;
+        } else {
+            return key;
+        }
+    }
+
+    private void putMessage(String message) {
+        try {
+            messageQueue.put(message);
+        } catch (InterruptedException ex) {
+            Logger.getLogger(ServerSocketProcessor.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
     public static void showExceptionToUser(Throwable e, String message) {
