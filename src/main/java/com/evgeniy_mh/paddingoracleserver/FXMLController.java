@@ -7,10 +7,8 @@ import java.io.RandomAccessFile;
 import java.io.StringWriter;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.util.Optional;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.animation.AnimationTimer;
@@ -21,21 +19,20 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
-import javafx.scene.control.ProgressBar;
-import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
 public class FXMLController {
-
+    
     private MainApp mainApp;
     private Stage stage;
     private ServerSocketProcessor processor = null;
     private FileChooser fileChooser = new FileChooser();
     private File secretKeyFile;
-    final BlockingQueue<String> messageQueue = new ArrayBlockingQueue<>(1);
-
+    
+    AtomicLong requestCount = new AtomicLong(0);
+    
     @FXML
     Button startServerButton;
     @FXML
@@ -48,14 +45,14 @@ public class FXMLController {
     Label requestCountLabel;
     @FXML
     Button openSecretKeyFile;
-
+    
     public void setMainApp(MainApp mainApp) {
         this.mainApp = mainApp;
     }
-
+    
     public void initialize() {
         stopServerButton.setDisable(true);
-
+        
         startServerButton.setOnAction(event -> {
             byte[] key = getSecretKey();
             if (key == null) {
@@ -64,7 +61,7 @@ public class FXMLController {
                 alert.setHeaderText("Вы не ввели ключ или ключ больше 128 бит.");
                 alert.showAndWait();
             } else {
-                processor = new ServerSocketProcessor(key);
+                processor = new ServerSocketProcessor(key, requestCount);
                 Thread server = new Thread(processor);
                 server.setDaemon(true);
                 server.start();
@@ -72,30 +69,30 @@ public class FXMLController {
                 startServerButton.setDisable(true);
             }
         });
-
+        
         stopServerButton.setOnAction(event -> {
             if (processor != null && processor.isRunning()) {
                 processor.stop();
                 startServerButton.setDisable(false);
                 stopServerButton.setDisable(true);
             }
-
+            
         });
         
-        secretKeyTextField.setOnMouseClicked(event->{
-            if(secretKeyFile!=null){
-                Alert alert=new Alert(Alert.AlertType.CONFIRMATION);
+        secretKeyTextField.setOnMouseClicked(event -> {
+            if (secretKeyFile != null) {
+                Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
                 alert.setTitle("Использовать поле ввода ключа?");
                 alert.setHeaderText("Вы желаете ввести ключ самостоятельно?");
-                 Optional<ButtonType> result = alert.showAndWait();
+                Optional<ButtonType> result = alert.showAndWait();
                 if (result.get() == ButtonType.OK) {
-                    secretKeyFile=null;
+                    secretKeyFile = null;
                     secretKeyTextField.clear();
                     updateSecretKeyInfo();
                 }
             }
         });
-
+        
         try {
             fileChooser.setInitialDirectory(new File(MainApp.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath()).getParentFile());
         } catch (URISyntaxException ex) {
@@ -105,28 +102,21 @@ public class FXMLController {
             secretKeyFile = openFile("Выберите файл с ключом");
             updateSecretKeyInfo();
         });
-
-        /*final LongProperty lastUpdate = new SimpleLongProperty();
+        
+        final LongProperty lastUpdate = new SimpleLongProperty();
         final long minUpdateInterval = 0;
         AnimationTimer timer = new AnimationTimer() {
             @Override
             public void handle(long now) {
                 if (now - lastUpdate.get() > minUpdateInterval) {
-                    final String message = messageQueue.poll();
-                    if (message != null) {
-                        
-                        //redo!
-                        if(ServerOutputTextArea.getText().length()>100) ServerOutputTextArea.clear();
-                        
-                        ServerOutputTextArea.appendText(message + "\n");
-                    }
+                    updateServerInfo();
                     lastUpdate.set(now);
                 }
             }
         };
-        timer.start();*/
+        timer.start();
     }
-
+    
     private byte[] getSecretKey() {
         if (secretKeyFile == null) {
             byte[] key = secretKeyTextField.getText().getBytes(StandardCharsets.UTF_8);
@@ -138,9 +128,17 @@ public class FXMLController {
         } else {
             return readBytesFromFile(secretKeyFile, 0, 128);
         }
-
     }
-
+    
+    private void updateServerInfo() {
+        if (processor != null && processor.isRunning()) {
+            serverStatusLabel.setText("Запущен");
+        } else {
+            serverStatusLabel.setText("Остановлен");
+        }        
+        requestCountLabel.setText(String.valueOf(requestCount.get()));
+    }
+    
     private void updateSecretKeyInfo() {
         if (secretKeyFile == null) {
             secretKeyTextField.setEditable(true);
@@ -149,7 +147,7 @@ public class FXMLController {
             secretKeyTextField.setEditable(false);
         }
     }
-
+    
     private File openFile(String dialogTitle) {
         fileChooser.setTitle(dialogTitle);
         File file = fileChooser.showOpenDialog(stage);
@@ -178,7 +176,7 @@ public class FXMLController {
             return null;
         }
     }
-
+    
     public static void showExceptionToUser(Throwable e, String message) {
         Alert errorAlert = new Alert(Alert.AlertType.ERROR);
         errorAlert.setTitle("Exception!");

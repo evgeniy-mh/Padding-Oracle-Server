@@ -5,6 +5,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -13,11 +14,13 @@ public class ServerSocketProcessor implements Runnable {
     private final int SERVER_PORT = 55555;
     private AtomicBoolean running = new AtomicBoolean(false);
     private ServerSocket server = null;
+    private final AtomicLong requestCount;
 
     private final byte[] mKey;
 
-    public ServerSocketProcessor( byte[] key) {
+    public ServerSocketProcessor(byte[] key, AtomicLong requestCount) {
         mKey = key;
+        this.requestCount = requestCount;
     }
 
     @Override
@@ -50,6 +53,12 @@ public class ServerSocketProcessor implements Runnable {
         while (running.get()) {
             try {
                 Socket fromclient = server.accept();
+
+                if (requestCount.get() == Long.MAX_VALUE) {
+                    requestCount.set(0);
+                } else {
+                    requestCount.getAndIncrement();
+                }
 
                 ClientSocketProcessor clientSocketProcessor = new ClientSocketProcessor(fromclient, mKey);
                 Thread t = new Thread(clientSocketProcessor);
