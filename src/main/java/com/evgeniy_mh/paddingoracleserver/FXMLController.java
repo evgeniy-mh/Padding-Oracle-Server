@@ -1,8 +1,14 @@
 package com.evgeniy_mh.paddingoracleserver;
 
+import java.io.File;
+import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.RandomAccessFile;
 import java.io.StringWriter;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.util.Optional;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.logging.Level;
@@ -13,14 +19,21 @@ import javafx.beans.property.SimpleLongProperty;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.stage.FileChooser;
+import javafx.stage.Stage;
 
 public class FXMLController {
 
     private MainApp mainApp;
+    private Stage stage;
     private ServerSocketProcessor processor = null;
+    private FileChooser fileChooser = new FileChooser();
+    private File secretKeyFile;
     final BlockingQueue<String> messageQueue = new ArrayBlockingQueue<>(1);
 
     @FXML
@@ -29,6 +42,12 @@ public class FXMLController {
     Button stopServerButton;
     @FXML
     TextField secretKeyTextField;
+    @FXML
+    Label serverStatusLabel;
+    @FXML
+    Label requestCountLabel;
+    @FXML
+    Button openSecretKeyFile;
 
     public void setMainApp(MainApp mainApp) {
         this.mainApp = mainApp;
@@ -42,7 +61,7 @@ public class FXMLController {
             if (key == null) {
                 Alert alert = new Alert(Alert.AlertType.WARNING);
                 alert.setTitle("Ошибка ключа шифрования AES");
-                alert.setHeaderText("Вы не ввели ключ или ввели ключ длина которого больше 128 бит.");
+                alert.setHeaderText("Вы не ввели ключ или ключ больше 128 бит.");
                 alert.showAndWait();
             } else {
                 processor = new ServerSocketProcessor(key);
@@ -61,6 +80,30 @@ public class FXMLController {
                 stopServerButton.setDisable(true);
             }
 
+        });
+        
+        secretKeyTextField.setOnMouseClicked(event->{
+            if(secretKeyFile!=null){
+                Alert alert=new Alert(Alert.AlertType.CONFIRMATION);
+                alert.setTitle("Использовать поле ввода ключа?");
+                alert.setHeaderText("Вы желаете ввести ключ самостоятельно?");
+                 Optional<ButtonType> result = alert.showAndWait();
+                if (result.get() == ButtonType.OK) {
+                    secretKeyFile=null;
+                    secretKeyTextField.clear();
+                    updateSecretKeyInfo();
+                }
+            }
+        });
+
+        try {
+            fileChooser.setInitialDirectory(new File(MainApp.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath()).getParentFile());
+        } catch (URISyntaxException ex) {
+            Logger.getLogger(FXMLController.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        openSecretKeyFile.setOnAction(event -> {
+            secretKeyFile = openFile("Выберите файл с ключом");
+            updateSecretKeyInfo();
         });
 
         /*final LongProperty lastUpdate = new SimpleLongProperty();
@@ -85,11 +128,54 @@ public class FXMLController {
     }
 
     private byte[] getSecretKey() {
-        byte[] key = secretKeyTextField.getText().getBytes(StandardCharsets.UTF_8);
-        if (key.length == 0 || key.length > 128) {
-            return null;
+        if (secretKeyFile == null) {
+            byte[] key = secretKeyTextField.getText().getBytes(StandardCharsets.UTF_8);
+            if (key.length == 0 || key.length > 128) {
+                return null;
+            } else {
+                return key;
+            }
         } else {
-            return key;
+            return readBytesFromFile(secretKeyFile, 0, 128);
+        }
+
+    }
+
+    private void updateSecretKeyInfo() {
+        if (secretKeyFile == null) {
+            secretKeyTextField.setEditable(true);
+        } else {
+            secretKeyTextField.setText(secretKeyFile.getAbsolutePath());
+            secretKeyTextField.setEditable(false);
+        }
+    }
+
+    private File openFile(String dialogTitle) {
+        fileChooser.setTitle(dialogTitle);
+        File file = fileChooser.showOpenDialog(stage);
+        return file;
+    }
+
+    /**
+     * Считывание необходимого количества байт из файла
+     *
+     * @param f Файл для считывания
+     * @param from Начальная позиция для считывания из файла(Номер байта)
+     * @param to Конечная позиция для считывания из файла(Номер байта)
+     * @return Массив байт которые были считаны из файла
+     */
+    public static byte[] readBytesFromFile(File f, int from, int to) {
+        try {
+            byte[] res;
+            try (RandomAccessFile raf = new RandomAccessFile(f, "r")) {
+                raf.seek(from);
+                res = new byte[to - from];
+                raf.read(res, 0, to - from);
+            }
+            return res;
+        } catch (IOException ex) {
+            CommonUtils.reportExceptionToMainThread(ex, "Exception in readBytesFromFile");
+            return null;
         }
     }
 

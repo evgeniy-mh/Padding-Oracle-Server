@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.scene.text.*?>
+<?import javafx.scene.effect.*?>
 <?import javafx.geometry.*?>
 <?import java.lang.*?>
 <?import java.util.*?>
@@ -11,21 +13,54 @@
    <children>
       <VBox prefHeight="200.0" prefWidth="100.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
          <children>
-            <HBox prefHeight="200.0" prefWidth="200.0">
+            <VBox prefHeight="200.0" spacing="5.0" HBox.hgrow="ALWAYS">
                <children>
-                  <VBox prefHeight="200.0" HBox.hgrow="ALWAYS" />
+                  <HBox prefWidth="200.0" spacing="5.0">
+                     <children>
+                        <Label text="Статус сервера:" />
+                        <Label fx:id="serverStatusLabel" text="Остановлен">
+                           <font>
+                              <Font name="System Bold" size="13.0" />
+                           </font>
+                        </Label>
+                     </children>
+                  </HBox>
+                  <HBox prefWidth="200.0" spacing="5.0">
+                     <children>
+                        <Label text="Число обращений:" />
+                        <Label fx:id="requestCountLabel" text="555" />
+                     </children>
+                  </HBox>
                </children>
+            </VBox>
+            <Separator prefWidth="200.0" />
+            <HBox spacing="5.0">
+               <children>
+                  <Label alignment="CENTER" contentDisplay="CENTER" layoutX="5.0" layoutY="5.0" minWidth="-Infinity" text="Секретный ключ:" AnchorPane.leftAnchor="5.0" AnchorPane.topAnchor="5.0" HBox.hgrow="NEVER">
+                     <padding>
+                        <Insets bottom="5.0" left="5.0" top="5.0" />
+                     </padding>
+                  </Label>
+                  <TextField fx:id="secretKeyTextField" layoutX="149.0" layoutY="5.0" minWidth="10.0" prefHeight="25.0" prefWidth="420.0" promptText="Введите ключ" AnchorPane.leftAnchor="124.0" AnchorPane.rightAnchor="273.0" HBox.hgrow="ALWAYS">
+                     <HBox.margin>
+                        <Insets />
+                     </HBox.margin>
+                  </TextField>
+                  <Button fx:id="openSecretKeyFile" minWidth="170.0" mnemonicParsing="false" text="Открыть файл ключа" />
+               </children>
+               <padding>
+                  <Insets bottom="5.0" />
+               </padding>
             </HBox>
-            <HBox>
+            <HBox spacing="5.0" VBox.vgrow="ALWAYS">
                <children>
-                  <TextField fx:id="secretKeyTextField" promptText="Секретный ключ" HBox.hgrow="ALWAYS" />
-                  <Button fx:id="startServerButton" mnemonicParsing="false" text="Запустить сервер" />
+                  <Button fx:id="startServerButton" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="Запустить сервер" HBox.hgrow="ALWAYS" />
+                  <Button fx:id="stopServerButton" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="Остановить сервер" HBox.hgrow="ALWAYS" />
                </children>
-               <VBox.margin>
+               <padding>
                   <Insets top="5.0" />
-               </VBox.margin>
+               </padding>
             </HBox>
-            <Button fx:id="stopServerButton" mnemonicParsing="false" text="Остановить сервер" />
          </children>
       </VBox>
    </children>

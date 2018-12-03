@@ -7,7 +7,6 @@ import java.net.SocketException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javafx.scene.control.ProgressIndicator;
 
 public class ServerSocketProcessor implements Runnable {
 
