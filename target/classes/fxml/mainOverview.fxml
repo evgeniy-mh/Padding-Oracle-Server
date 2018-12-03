@@ -11,15 +11,9 @@
    <children>
       <VBox prefHeight="200.0" prefWidth="100.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
          <children>
-            <ProgressBar fx:id="progressBar" prefWidth="200.0" progress="0.0" />
             <HBox prefHeight="200.0" prefWidth="200.0">
                <children>
-                  <VBox prefHeight="200.0" HBox.hgrow="ALWAYS">
-                     <children>
-                        <Label text="Сообщения сервера" />
-                        <TextArea fx:id="ServerOutputTextArea" editable="false" prefHeight="200.0" prefWidth="200.0" />
-                     </children>
-                  </VBox>
+                  <VBox prefHeight="200.0" HBox.hgrow="ALWAYS" />
                </children>
             </HBox>
             <HBox>

@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -16,13 +15,9 @@ public class ServerSocketProcessor implements Runnable {
     private AtomicBoolean running = new AtomicBoolean(false);
     private ServerSocket server = null;
 
-    private final BlockingQueue<String> mMessageQueue;
-    private final ProgressIndicator mProgressIndicator;
     private final byte[] mKey;
 
-    public ServerSocketProcessor(BlockingQueue<String> messageQueue, ProgressIndicator progressIndicator, byte[] key) {
-        mMessageQueue = messageQueue;
-        mProgressIndicator = progressIndicator;
+    public ServerSocketProcessor( byte[] key) {
         mKey = key;
     }
 
@@ -51,29 +46,18 @@ public class ServerSocketProcessor implements Runnable {
         return running.get();
     }
 
-    private void putMessage(String message) {
-        try {
-            mMessageQueue.put(message);
-        } catch (InterruptedException ex) {
-            Logger.getLogger(ServerSocketProcessor.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }
-
     private void initServer() throws IOException {
         server = new ServerSocket(SERVER_PORT);
         while (running.get()) {
             try {
-                putMessage("Waiting client...");
                 Socket fromclient = server.accept();
-                putMessage("Client connected");
 
-                ClientSocketProcessor clientSocketProcessor = new ClientSocketProcessor(mMessageQueue, mProgressIndicator, fromclient, mKey);
+                ClientSocketProcessor clientSocketProcessor = new ClientSocketProcessor(fromclient, mKey);
                 Thread t = new Thread(clientSocketProcessor);
                 t.setDaemon(true);
                 t.start();
             } catch (SocketException ex) {
                 System.out.println("initServer() SocketException");
-                //Logger.getLogger(ServerSocketProcessor.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
         server.close();

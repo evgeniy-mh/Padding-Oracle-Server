@@ -5,7 +5,6 @@ com/evgeniy_mh/paddingoracleserver/FileUtils.class
 com/evgeniy_mh/paddingoracleserver/AESEngine/AES_CBCPaddingCheck.class
 com/evgeniy_mh/paddingoracleserver/ClientSocketProcessor.class
 com/evgeniy_mh/paddingoracleserver/AESEngine/AES.class
-com/evgeniy_mh/paddingoracleserver/FXMLController$1.class
 com/evgeniy_mh/paddingoracleserver/CommonUtils.class
 com/evgeniy_mh/paddingoracleserver/FXMLController.class
 com/evgeniy_mh/paddingoracleserver/AESEngine/PKCS7.class

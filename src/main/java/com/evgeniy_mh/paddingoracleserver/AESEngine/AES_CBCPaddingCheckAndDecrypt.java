@@ -8,19 +8,16 @@ import java.io.RandomAccessFile;
 import java.util.concurrent.Callable;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javafx.scene.control.ProgressIndicator;
 
 public class AES_CBCPaddingCheckAndDecrypt implements Callable<Boolean> {
 
     private final AES mAES;
-    private final ProgressIndicator progressIndicator;
     private final File in;
     private final File out;
     private final byte[] key;
 
-    public AES_CBCPaddingCheckAndDecrypt(File in, File out, byte[] key, ProgressIndicator progressIndicator) {
+    public AES_CBCPaddingCheckAndDecrypt(File in, File out, byte[] key) {
         mAES = new AES();
-        this.progressIndicator = progressIndicator;
         this.in = in;
         this.out = out;
         this.key = key;
@@ -74,7 +71,7 @@ public class AES_CBCPaddingCheckAndDecrypt implements Callable<Boolean> {
 
                     if (paddingCount > 0 && paddingCount <= 16) {
                         for (int p = 0; p < paddingCount; p++) {
-                            if (c[p] != paddingCount) {
+                            if (c[AES.BLOCK_SIZE - 1 - p] != paddingCount) {
                                 error = true;
                                 break;
                             }
@@ -86,9 +83,7 @@ public class AES_CBCPaddingCheckAndDecrypt implements Callable<Boolean> {
                         nToDeleteBytes = c[AES.BLOCK_SIZE - 1];
                     }
                 }
-                progressIndicator.setProgress((double) i / nBlocks);
             }
-
             OUTraf.setLength(OUTraf.length() - nToDeleteBytes);
             OUTraf.close();
             INraf.close();
@@ -96,7 +91,6 @@ public class AES_CBCPaddingCheckAndDecrypt implements Callable<Boolean> {
             Logger.getLogger(AES_CBCPaddingCheckAndDecrypt.class.getName()).log(Level.SEVERE, null, e);
             CommonUtils.reportExceptionToMainThread(e, "Exception in decrypt thread!");
         }
-        progressIndicator.setProgress(0.0);
         return !error;
     }
 }

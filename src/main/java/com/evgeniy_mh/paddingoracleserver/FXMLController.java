@@ -28,10 +28,6 @@ public class FXMLController {
     @FXML
     Button stopServerButton;
     @FXML
-    TextArea ServerOutputTextArea;
-    @FXML
-    ProgressBar progressBar;
-    @FXML
     TextField secretKeyTextField;
 
     public void setMainApp(MainApp mainApp) {
@@ -49,11 +45,10 @@ public class FXMLController {
                 alert.setHeaderText("Вы не ввели ключ или ввели ключ длина которого больше 128 бит.");
                 alert.showAndWait();
             } else {
-                processor = new ServerSocketProcessor(messageQueue, progressBar, key);
+                processor = new ServerSocketProcessor(key);
                 Thread server = new Thread(processor);
                 server.setDaemon(true);
                 server.start();
-                putMessage("Сервер запущен с ключом " + secretKeyTextField.getText());
                 stopServerButton.setDisable(false);
                 startServerButton.setDisable(true);
             }
@@ -62,14 +57,13 @@ public class FXMLController {
         stopServerButton.setOnAction(event -> {
             if (processor != null && processor.isRunning()) {
                 processor.stop();
-                putMessage("Сервер остановлен");
                 startServerButton.setDisable(false);
                 stopServerButton.setDisable(true);
             }
 
         });
 
-        final LongProperty lastUpdate = new SimpleLongProperty();
+        /*final LongProperty lastUpdate = new SimpleLongProperty();
         final long minUpdateInterval = 0;
         AnimationTimer timer = new AnimationTimer() {
             @Override
@@ -77,13 +71,17 @@ public class FXMLController {
                 if (now - lastUpdate.get() > minUpdateInterval) {
                     final String message = messageQueue.poll();
                     if (message != null) {
+                        
+                        //redo!
+                        if(ServerOutputTextArea.getText().length()>100) ServerOutputTextArea.clear();
+                        
                         ServerOutputTextArea.appendText(message + "\n");
                     }
                     lastUpdate.set(now);
                 }
             }
         };
-        timer.start();
+        timer.start();*/
     }
 
     private byte[] getSecretKey() {
@@ -92,14 +90,6 @@ public class FXMLController {
             return null;
         } else {
             return key;
-        }
-    }
-
-    private void putMessage(String message) {
-        try {
-            messageQueue.put(message);
-        } catch (InterruptedException ex) {
-            Logger.getLogger(ServerSocketProcessor.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 

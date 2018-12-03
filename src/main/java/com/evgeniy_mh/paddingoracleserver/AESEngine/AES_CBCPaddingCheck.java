@@ -2,18 +2,15 @@ package com.evgeniy_mh.paddingoracleserver.AESEngine;
 
 import com.evgeniy_mh.paddingoracleserver.CommonUtils;
 import java.util.concurrent.Callable;
-import javafx.scene.control.ProgressIndicator;
 
 public class AES_CBCPaddingCheck implements Callable<Boolean> {
 
     private final AES mAES;
-    private final ProgressIndicator progressIndicator;
     private final byte[] in;
     private final byte[] key;
 
-    public AES_CBCPaddingCheck(byte[] in, byte[] key, ProgressIndicator progressIndicator) {
+    public AES_CBCPaddingCheck(byte[] in, byte[] key) {
         mAES = new AES();
-        this.progressIndicator = progressIndicator;
         this.in = in;
         this.key = key;
     }
@@ -60,7 +57,7 @@ public class AES_CBCPaddingCheck implements Callable<Boolean> {
 
                 if (paddingCount > 0 && paddingCount <= 16) {
                     for (int p = 0; p < paddingCount; p++) {
-                        if (c[p] != paddingCount) {
+                        if (c[AES.BLOCK_SIZE - 1 - p] != paddingCount) {
                             error = true;
                             break;
                         }
@@ -69,9 +66,15 @@ public class AES_CBCPaddingCheck implements Callable<Boolean> {
                     error = true;
                 }
             }
-            progressIndicator.setProgress((double) i / nBlocks);
         }
-        progressIndicator.setProgress(0.0);
         return !error;
+    }
+
+    static public void debugPrintByteArray(String mes, byte[] array) {
+        System.out.println(mes);
+        for (int i = 0; i < array.length; i++) {
+            System.out.print(String.format("0x%08X", array[i]) + " ");
+        }
+        System.out.println();
     }
 }

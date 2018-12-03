@@ -10,13 +10,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javafx.scene.control.ProgressIndicator;
 
 public class ClientSocketProcessor implements Runnable {
 
@@ -24,23 +22,11 @@ public class ClientSocketProcessor implements Runnable {
     private final int PADDING_ERROR_RESPONSE = 500;
 
     private final Socket mClientSocket;
-    private final BlockingQueue<String> mMessageQueue;
-    private final ProgressIndicator mProgressIndicator;
     private final byte[] mKey;
 
-    ClientSocketProcessor(BlockingQueue<String> messageQueue, ProgressIndicator progressIndicator, Socket clientSocket, byte[] key) {
-        mMessageQueue = messageQueue;
-        mProgressIndicator = progressIndicator;
+    ClientSocketProcessor(Socket clientSocket, byte[] key) {
         mClientSocket = clientSocket;
-        mKey=key;
-    }
-
-    private void putMessage(String message) {
-        try {
-            mMessageQueue.put(message);
-        } catch (InterruptedException ex) {
-            Logger.getLogger(ServerSocketProcessor.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        mKey = key;
     }
 
     @Override
@@ -55,7 +41,6 @@ public class ClientSocketProcessor implements Runnable {
 
             if (line.equals("new file")) {
                 long fileSize = in.readLong();
-                putMessage("New file from client, size: " + fileSize);
 
                 boolean isPaddingCorrect = false;
                 if (fileSize > 50000) {
@@ -72,8 +57,7 @@ public class ClientSocketProcessor implements Runnable {
                             fos.write(t);
                         }
                     }
-                    putMessage("Saved new file from client");
-                    isPaddingCorrect = checkPadding(tempSavedFile,mKey);
+                    isPaddingCorrect = checkPadding(tempSavedFile, mKey);
                     tempSavedFile.delete();
                 } else {
                     byte[] tempFile = new byte[(int) fileSize];
@@ -83,10 +67,8 @@ public class ClientSocketProcessor implements Runnable {
 
                 if (isPaddingCorrect) {
                     out.writeInt(PADDING_OK_RESPONSE);
-                    putMessage("Padding ok");
                 } else {
                     out.writeInt(PADDING_ERROR_RESPONSE);
-                    putMessage("Padding error");
                 }
 
                 out.flush();
@@ -107,7 +89,7 @@ public class ClientSocketProcessor implements Runnable {
         //File tempDecryptedFile = new File("/home/evgeniy/Files/Downloads/temp_dec");
         File tempDecryptedFile = File.createTempFile("tempDecSaved", null, new File("/home/evgeniy/Files/Downloads/"));
 
-        Callable c = new AES_CBCPaddingCheckAndDecrypt(file, tempDecryptedFile, key, mProgressIndicator);
+        Callable c = new AES_CBCPaddingCheckAndDecrypt(file, tempDecryptedFile, key);
         FutureTask<Boolean> ftask = new FutureTask<>(c);
         Thread thread = new Thread(ftask);
         thread.start();
@@ -124,7 +106,7 @@ public class ClientSocketProcessor implements Runnable {
     }
 
     private boolean checkPadding(byte[] file, byte[] key) throws IOException {
-        Callable c = new AES_CBCPaddingCheck(file, key, mProgressIndicator);
+        Callable c = new AES_CBCPaddingCheck(file, key);
         FutureTask<Boolean> ftask = new FutureTask<>(c);
         Thread thread = new Thread(ftask);
         thread.start();
@@ -132,10 +114,10 @@ public class ClientSocketProcessor implements Runnable {
         boolean isPaddingCorrect = false;
         try {
             isPaddingCorrect = ftask.get();
-
         } catch (InterruptedException | ExecutionException ex) {
             Logger.getLogger(ServerSocketProcessor.class.getName()).log(Level.SEVERE, null, ex);
         }
+
         return isPaddingCorrect;
     }
 
