@@ -44,11 +44,11 @@ public class ClientSocketProcessor implements Runnable {
 
                 boolean isPaddingCorrect = false;
                 if (fileSize > 50000) {
-                    //File pathnameParentDir = new File(MainApp.class.getProtectionDomain().getCodeSource().getLocation().getPath()).getParentFile();
-                    //tempSavedFile = new File(pathnameParentDir, "tempSavedFile");
+                    File pathnameParentDir = new File(MainApp.class.getProtectionDomain().getCodeSource().getLocation().getPath()).getParentFile();
+                    //File tempSavedFile = new File(pathnameParentDir, "tempSavedFile");
                     //tempSavedFile = new File("/home/evgeniy/Files/Downloads/temp");
                     //tempSavedFile.createNewFile();
-                    File tempSavedFile = File.createTempFile("tempSaved", null, new File("/home/evgeniy/Files/Downloads/"));
+                    File tempSavedFile = File.createTempFile("tempSaved", null, pathnameParentDir);
 
                     try (FileOutputStream fos = new FileOutputStream(tempSavedFile)) {
                         int t;
@@ -84,10 +84,10 @@ public class ClientSocketProcessor implements Runnable {
     }
 
     private boolean checkPadding(File file, byte[] key) throws IOException {
-        //File pathnameParentDir = new File(MainApp.class.getProtectionDomain().getCodeSource().getLocation().getPath()).getParentFile();
-        //tempSavedFile = new File(pathnameParentDir, "tempDecryptedFile");
+        File pathnameParentDir = new File(MainApp.class.getProtectionDomain().getCodeSource().getLocation().getPath()).getParentFile();
+        //File tempSavedFile = new File(pathnameParentDir, "tempDecryptedFile");
         //File tempDecryptedFile = new File("/home/evgeniy/Files/Downloads/temp_dec");
-        File tempDecryptedFile = File.createTempFile("tempDecSaved", null, new File("/home/evgeniy/Files/Downloads/"));
+        File tempDecryptedFile = File.createTempFile("tempDecSaved", null, pathnameParentDir);
 
         Callable c = new AES_CBCPaddingCheckAndDecrypt(file, tempDecryptedFile, key);
         FutureTask<Boolean> ftask = new FutureTask<>(c);
