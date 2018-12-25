@@ -1,7 +1,7 @@
 package com.evgeniy_mh.paddingoracleserver;
 
-import com.evgeniy_mh.paddingoracleserver.AESEngine.AES_CBCPaddingCheck;
-import com.evgeniy_mh.paddingoracleserver.AESEngine.AES_CBCPaddingCheckAndDecrypt;
+import com.evgeniy_mh.paddingoracleserver.AESEngine.AES_CBCPaddingCheckBytes;
+import com.evgeniy_mh.paddingoracleserver.AESEngine.AES_CBCPaddingCheckFile;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
@@ -45,9 +45,6 @@ public class ClientSocketProcessor implements Runnable {
                 boolean isPaddingCorrect = false;
                 if (fileSize > 50000) {
                     File pathnameParentDir = new File(MainApp.class.getProtectionDomain().getCodeSource().getLocation().getPath()).getParentFile();
-                    //File tempSavedFile = new File(pathnameParentDir, "tempSavedFile");
-                    //tempSavedFile = new File("/home/evgeniy/Files/Downloads/temp");
-                    //tempSavedFile.createNewFile();
                     File tempSavedFile = File.createTempFile("tempSaved", null, pathnameParentDir);
 
                     try (FileOutputStream fos = new FileOutputStream(tempSavedFile)) {
@@ -85,11 +82,9 @@ public class ClientSocketProcessor implements Runnable {
 
     private boolean checkPadding(File file, byte[] key) throws IOException {
         File pathnameParentDir = new File(MainApp.class.getProtectionDomain().getCodeSource().getLocation().getPath()).getParentFile();
-        //File tempSavedFile = new File(pathnameParentDir, "tempDecryptedFile");
-        //File tempDecryptedFile = new File("/home/evgeniy/Files/Downloads/temp_dec");
         File tempDecryptedFile = File.createTempFile("tempDecSaved", null, pathnameParentDir);
 
-        Callable c = new AES_CBCPaddingCheckAndDecrypt(file, tempDecryptedFile, key);
+        Callable c = new AES_CBCPaddingCheckFile(file, tempDecryptedFile, key);
         FutureTask<Boolean> ftask = new FutureTask<>(c);
         Thread thread = new Thread(ftask);
         thread.start();
@@ -106,7 +101,7 @@ public class ClientSocketProcessor implements Runnable {
     }
 
     private boolean checkPadding(byte[] file, byte[] key) throws IOException {
-        Callable c = new AES_CBCPaddingCheck(file, key);
+        Callable c = new AES_CBCPaddingCheckBytes(file, key);
         FutureTask<Boolean> ftask = new FutureTask<>(c);
         Thread thread = new Thread(ftask);
         thread.start();

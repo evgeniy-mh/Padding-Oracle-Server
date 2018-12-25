@@ -18,7 +18,7 @@ public class ServerSocketProcessor implements Runnable {
 
     private final byte[] mKey;
 
-    public ServerSocketProcessor(byte[] key, AtomicLong requestCount) {
+    ServerSocketProcessor(byte[] key, AtomicLong requestCount) {
         mKey = key;
         this.requestCount = requestCount;
     }

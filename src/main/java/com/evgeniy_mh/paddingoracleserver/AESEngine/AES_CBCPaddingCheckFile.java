@@ -9,14 +9,14 @@ import java.util.concurrent.Callable;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class AES_CBCPaddingCheckAndDecrypt implements Callable<Boolean> {
+public class AES_CBCPaddingCheckFile implements Callable<Boolean> {
 
     private final AES mAES;
     private final File in;
     private final File out;
     private final byte[] key;
 
-    public AES_CBCPaddingCheckAndDecrypt(File in, File out, byte[] key) {
+    public AES_CBCPaddingCheckFile(File in, File out, byte[] key) {
         mAES = new AES();
         this.in = in;
         this.out = out;
@@ -88,7 +88,7 @@ public class AES_CBCPaddingCheckAndDecrypt implements Callable<Boolean> {
             OUTraf.close();
             INraf.close();
         } catch (IOException e) {
-            Logger.getLogger(AES_CBCPaddingCheckAndDecrypt.class.getName()).log(Level.SEVERE, null, e);
+            Logger.getLogger(AES_CBCPaddingCheckFile.class.getName()).log(Level.SEVERE, null, e);
             CommonUtils.reportExceptionToMainThread(e, "Exception in decrypt thread!");
         }
         return !error;

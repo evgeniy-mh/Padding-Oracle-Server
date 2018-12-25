@@ -3,13 +3,13 @@ package com.evgeniy_mh.paddingoracleserver.AESEngine;
 import com.evgeniy_mh.paddingoracleserver.CommonUtils;
 import java.util.concurrent.Callable;
 
-public class AES_CBCPaddingCheck implements Callable<Boolean> {
+public class AES_CBCPaddingCheckBytes implements Callable<Boolean> {
 
     private final AES mAES;
     private final byte[] in;
     private final byte[] key;
 
-    public AES_CBCPaddingCheck(byte[] in, byte[] key) {
+    public AES_CBCPaddingCheckBytes(byte[] in, byte[] key) {
         mAES = new AES();
         this.in = in;
         this.key = key;
@@ -68,13 +68,5 @@ public class AES_CBCPaddingCheck implements Callable<Boolean> {
             }
         }
         return !error;
-    }
-
-    static public void debugPrintByteArray(String mes, byte[] array) {
-        System.out.println(mes);
-        for (int i = 0; i < array.length; i++) {
-            System.out.print(String.format("0x%08X", array[i]) + " ");
-        }
-        System.out.println();
     }
 }
